@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Aegis SDK Example",
+    "slug": "aegis-sdk-example",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/cavos-icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/cavos-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#000000"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/cavos-icon.png",
+        "backgroundColor": "#000000"
+      }
+    },
+    "web": {
+      "favicon": "./assets/cavos-icon.png"
+    }
+  }
+}
