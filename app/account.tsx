@@ -559,10 +559,10 @@ export default function Account() {
                   {isSigningUp ? (
                     <View style={styles.loadingContainer}>
                       <ActivityIndicator color="#FFFFFF" size="small" />
-                      <Text style={styles.buttonText}>Signing Up...</Text>
+                      <Text style={styles.buttonText}>Registering...</Text>
                     </View>
                   ) : (
-                    <Text style={styles.buttonText}>Sign Up</Text>
+                    <Text style={styles.buttonText}>Register</Text>
                   )}
                 </TouchableOpacity>
 
@@ -577,10 +577,10 @@ export default function Account() {
                   {isSigningIn ? (
                     <View style={styles.loadingContainer}>
                       <ActivityIndicator color="#FFFFFF" size="small" />
-                      <Text style={styles.buttonText}>Signing In...</Text>
+                      <Text style={styles.buttonText}>Logging In...</Text>
                     </View>
                   ) : (
-                    <Text style={styles.buttonText}>Sign In</Text>
+                    <Text style={styles.buttonText}>Login</Text>
                   )}
                 </TouchableOpacity>
 
