@@ -17,7 +17,7 @@ import { useState } from "react";
 
 export default function Balance() {
   const router = useRouter();
-  const { disconnect, aegisAccount, currentAddress } = useAegis();
+  const { aegisAccount, currentAddress } = useAegis();
 
   // State for balance data and loading
   const [ethBalance, setEthBalance] = useState<string | null>(null);
@@ -88,40 +88,6 @@ export default function Balance() {
         Alert.alert("Error", "Failed to copy address");
       }
     }
-  };
-
-  const handleLogout = async () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout? This will clear your wallet data and you will need to create a new wallet.",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              // Clear secure storage
-              await SecureStore.deleteItemAsync("wallet_private_key");
-
-              // Disconnect from Aegis
-              disconnect();
-
-              // Navigate back to home screen
-              router.push("/");
-
-              Alert.alert("Success", "Logged out successfully");
-            } catch (error) {
-              console.error("Logout failed:", error);
-              Alert.alert("Error", "Failed to logout. Please try again.");
-            }
-          },
-        },
-      ]
-    );
   };
 
   return (
@@ -205,10 +171,6 @@ export default function Balance() {
           </View>
         )}
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </TouchableOpacity>
-
         <Text style={styles.footer}>Aegis sdk example</Text>
       </ScrollView>
     </SafeAreaView>
@@ -241,15 +203,16 @@ const styles = StyleSheet.create({
   scrollContent: {
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingBottom: 100,
+    paddingBottom: 80,
+    paddingTop: 20,
   },
   logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 40,
+    width: 100,
+    height: 100,
+    marginBottom: 50,
   },
   addressContainer: {
-    marginBottom: 20,
+    marginBottom: 40,
     alignItems: "center",
   },
   addressLabel: {
@@ -279,9 +242,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     paddingVertical: 16,
     borderRadius: 8,
-    marginBottom: 20,
+    marginBottom: 30,
     width: "100%",
-    maxWidth: 300,
+    maxWidth: 280,
     alignSelf: "center",
   },
   disabledButton: {
@@ -296,9 +259,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#1a1a1a",
     padding: 16,
     borderRadius: 8,
-    marginBottom: 20,
+    marginBottom: 30,
     width: "100%",
-    maxWidth: 300,
+    maxWidth: 280,
     alignItems: "center",
     alignSelf: "center",
   },
@@ -312,22 +275,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
-  logoutButton: {
-    backgroundColor: "#FF3B30",
-    paddingHorizontal: 40,
-    paddingVertical: 16,
-    borderRadius: 8,
-    marginBottom: 20,
-    width: "100%",
-    maxWidth: 300,
-    alignSelf: "center",
-  },
-  logoutButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
-  },
   buttonText: {
     color: "#FFFFFF",
     fontSize: 16,
@@ -338,6 +285,9 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 14,
     position: "absolute",
-    bottom: 50,
+    bottom: 20,
+    left: 0,
+    right: 0,
+    textAlign: "center",
   },
 });

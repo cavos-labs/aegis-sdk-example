@@ -319,6 +319,9 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 14,
     position: "absolute",
-    bottom: 50,
+    bottom: 20,
+    left: 0,
+    right: 0,
+    textAlign: "center",
   },
 });
