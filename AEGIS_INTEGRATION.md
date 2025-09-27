@@ -53,10 +53,25 @@ cd aegis-sdk-example
 npm install
 ```
 
-### 2. Get App ID (Required)
-1. Visit https://aegis.cavos.xyz
-2. Register your app to get a unique App ID
-3. Replace `'example-app-id'` in `app/_layout.tsx` with your real App ID
+### 2. Environment Setup
+Your app uses environment variables for secure configuration:
+
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+
+2. **Environment Variables**:
+   - Copy `.env.example` to `.env`
+   - Your `.env` file already contains your credentials
+   - Never commit `.env` to version control
+
+3. **Configuration**:
+   - **App ID**: `app-6fd6d3c95e7a16fc717c5895d3b76ee0`
+   - **API Secret**: `41c2cdac674030a62122f7e5dffd5d68e6b07053a48263b8cc87286ceefbecf1`
+   - **Network**: SN_SEPOLIA (testnet)
+
+Configuration is managed in `config.ts` and loaded from `.env` file.
 
 ### 3. Run the App
 ```bash
