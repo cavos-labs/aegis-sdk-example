@@ -10,6 +10,9 @@ This example app demonstrates how to integrate the Aegis SDK with **deploy accou
 ✅ **Wallet Persistence** - Existing wallets are automatically loaded on app start  
 ✅ **Error Handling** - Proper error handling with user-friendly alerts  
 ✅ **Loading States** - Visual feedback during wallet deployment  
+✅ **Execute Transactions** - Approve transactions using SDK execute methods  
+✅ **Batch Transactions** - Execute multiple calls in a single transaction  
+✅ **Balance Queries** - Check ETH and STRK token balances  
 
 ## Key Features
 
@@ -24,11 +27,23 @@ This example app demonstrates how to integrate the Aegis SDK with **deploy accou
 - Automatically loads existing wallets on app start
 - No private keys stored in plain text
 
+### ⚡ **Transaction Execution**
+- Execute approve transactions using SDK methods
+- Batch transaction support for multiple calls
+- Real-time transaction hash display
+- Comprehensive error handling
+
+### 💰 **Balance Queries**
+- Check ETH balance on Starknet
+- Check STRK token balance
+- Real-time balance updates
+
 ### 🎨 **User Experience**
 - Clean, modern UI with dark theme
-- Loading indicators during deployment
+- Loading indicators during operations
 - Success/error alerts with detailed information
 - Copy address functionality
+- Input validation and user feedback
 
 ## Setup Instructions
 
@@ -90,6 +105,44 @@ const loadExistingWallet = async () => {
 };
 ```
 
+### 4. **Transaction Execution**
+Execute approve transactions using the SDK:
+```typescript
+const handleExecuteApprove = async () => {
+  const strkTokenAddress = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
+  
+  const result = await aegisAccount.execute(
+    strkTokenAddress,
+    "approve",
+    [spenderAddress, approveAmount, "0"]
+  );
+  
+  console.log("Transaction hash:", result.transactionHash);
+};
+```
+
+### 5. **Batch Transactions**
+Execute multiple calls in a single transaction:
+```typescript
+const handleExecuteBatch = async () => {
+  const calls = [
+    {
+      contractAddress: strkTokenAddress,
+      entrypoint: "approve",
+      calldata: [spenderAddress, approveAmount, "0"]
+    },
+    {
+      contractAddress: strkTokenAddress,
+      entrypoint: "allowance",
+      calldata: [currentAddress, spenderAddress]
+    }
+  ];
+
+  const result = await aegisAccount.executeBatch(calls);
+  console.log("Batch transaction hash:", result.transactionHash);
+};
+```
+
 ## File Structure
 
 ```
@@ -132,21 +185,36 @@ The AegisProvider accepts these configuration options:
 5. Verify the wallet address is displayed
 6. Restart the app to test wallet persistence
 
+### Test Transaction Execution
+1. Navigate to the balance screen after wallet deployment
+2. Check ETH and STRK balances
+3. Enter a spender address (use the default or change it)
+4. Enter an approve amount (default is 0.5 ETH in wei)
+5. Tap "Execute Approve" to send a single transaction
+6. Tap "Execute Batch" to send multiple calls in one transaction
+7. Verify transaction hashes are displayed
+
 ### Expected Behavior
 - ✅ Wallet deploys successfully
 - ✅ Address is displayed correctly
 - ✅ Private key is saved securely
 - ✅ Wallet persists across app restarts
+- ✅ Balance queries work correctly
+- ✅ Approve transactions execute successfully
+- ✅ Batch transactions execute successfully
+- ✅ Transaction hashes are displayed
 - ✅ Error handling works for network issues
 
 ## Next Steps
 
-This example focuses only on wallet deployment. You can extend it by adding:
+This example now includes wallet deployment, balance queries, and transaction execution. You can extend it further by adding:
 
-- **Transaction Execution** - Send transactions using `aegisAccount.execute()`
-- **Balance Queries** - Check ETH/token balances
+- **More Transaction Types** - Transfer, swap, or other contract interactions
 - **Social Login** - Add OAuth (Apple/Google) authentication
 - **Email/Password Auth** - Add traditional authentication
+- **NFT Support** - Query and interact with NFT contracts
+- **Transaction History** - Display past transactions
+- **Gas Estimation** - Show estimated gas costs before execution
 
 ## Troubleshooting
 

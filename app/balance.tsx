@@ -8,10 +8,10 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  Linking,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAegis } from "@cavos/aegis";
-import * as SecureStore from "expo-secure-store";
 import * as Clipboard from "expo-clipboard";
 import { useState } from "react";
 
@@ -24,6 +24,16 @@ export default function Balance() {
   const [tokenBalance, setTokenBalance] = useState<string | null>(null);
   const [isLoadingEth, setIsLoadingEth] = useState(false);
   const [isLoadingToken, setIsLoadingToken] = useState(false);
+
+  // State for execute approve
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [lastTransactionHash, setLastTransactionHash] = useState<string | null>(
+    null
+  );
+
+  // Fixed values (hardcoded)
+  const spenderAddress = "0x1234567890123456789012345678901234567890";
+  const approveAmount = "500000000000000000"; // 0.5 ETH in wei
 
   const handleGetSTRKBalance = async () => {
     if (!aegisAccount) {
@@ -87,6 +97,56 @@ export default function Balance() {
         console.error("Failed to copy address:", error);
         Alert.alert("Error", "Failed to copy address");
       }
+    }
+  };
+
+  const handleExecuteApprove = async () => {
+    if (!aegisAccount) {
+      Alert.alert("Error", "Aegis SDK not initialized");
+      return;
+    }
+
+    setIsExecuting(true);
+    try {
+      // STRK token address on Sepolia
+      const strkTokenAddress =
+        "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
+
+      console.log("Executing approve transaction:", {
+        contract: strkTokenAddress,
+        spender: spenderAddress,
+        amount: approveAmount,
+        currentAddress: currentAddress,
+      });
+
+      // Execute approve transaction using SDK
+      const result = await aegisAccount.executeBatch([
+        {
+          contractAddress: strkTokenAddress,
+          entrypoint: "approve",
+          calldata: [spenderAddress, approveAmount, "0"],
+        },
+      ]);
+
+      setLastTransactionHash(result.transactionHash);
+
+      Alert.alert(
+        "Transaction Successful!",
+        `Approve transaction executed successfully.\n\nTransaction Hash: ${result.transactionHash}\n\nSpender: ${spenderAddress}\nAmount: ${approveAmount}`,
+        [{ text: "OK" }]
+      );
+
+      console.log("Approve transaction result:", result);
+    } catch (error) {
+      console.error("Failed to execute approve transaction:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      Alert.alert(
+        "Error",
+        `Failed to execute approve transaction: ${errorMessage}`
+      );
+    } finally {
+      setIsExecuting(false);
     }
   };
 
@@ -171,7 +231,74 @@ export default function Balance() {
           </View>
         )}
 
-        <Text style={styles.footer}>Aegis sdk example</Text>
+        {/* Execute Approve Section */}
+        <View style={styles.sectionDivider} />
+        <Text style={styles.sectionTitle}>Execute Approve</Text>
+
+        <TouchableOpacity
+          style={[styles.balanceButton, isExecuting && styles.disabledButton]}
+          onPress={handleExecuteApprove}
+          disabled={isExecuting}
+        >
+          {isExecuting ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator color="#FFFFFF" size="small" />
+              <Text style={styles.buttonText}>Executing...</Text>
+            </View>
+          ) : (
+            <Text style={styles.buttonText}>Execute Approve</Text>
+          )}
+        </TouchableOpacity>
+
+        {lastTransactionHash && (
+          <View style={styles.transactionDetails}>
+            <Text style={styles.transactionTitle}>Transaction Details</Text>
+
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Transaction Hash:</Text>
+              <Text style={styles.detailValue}>
+                {lastTransactionHash.slice(0, 10)}...
+                {lastTransactionHash.slice(-8)}
+              </Text>
+            </View>
+
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Spender:</Text>
+              <Text style={styles.detailValue}>
+                {spenderAddress.slice(0, 10)}...{spenderAddress.slice(-8)}
+              </Text>
+            </View>
+
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Amount:</Text>
+              <Text style={styles.detailValue}>{approveAmount} wei</Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.voyagerButton}
+              onPress={async () => {
+                const voyagerUrl = `https://sepolia.voyager.online/tx/${lastTransactionHash}`;
+                console.log("Voyager URL:", voyagerUrl);
+
+                try {
+                  const supported = await Linking.canOpenURL(voyagerUrl);
+                  if (supported) {
+                    await Linking.openURL(voyagerUrl);
+                  } else {
+                    Alert.alert("Error", "Cannot open Voyager URL");
+                  }
+                } catch (error) {
+                  console.error("Failed to open Voyager URL:", error);
+                  Alert.alert("Error", "Failed to open Voyager URL");
+                }
+              }}
+            >
+              <Text style={styles.voyagerButtonText}>View on Voyager</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <Text style={styles.footer}>Aegis SDK Example</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -241,11 +368,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#007AFF",
     paddingHorizontal: 40,
     paddingVertical: 16,
-    borderRadius: 8,
-    marginBottom: 30,
+    borderRadius: 12,
+    marginBottom: 20,
     width: "100%",
     maxWidth: 280,
     alignSelf: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   disabledButton: {
     backgroundColor: "#666666",
@@ -275,9 +410,106 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: "#333333",
+    width: "100%",
+    marginVertical: 30,
+  },
+  sectionTitle: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  inputContainer: {
+    width: "100%",
+    maxWidth: 280,
+    marginBottom: 20,
+    alignSelf: "center",
+  },
+  inputLabel: {
+    color: "#CCCCCC",
+    fontSize: 14,
+    marginBottom: 8,
+    fontWeight: "500",
+  },
+  fixedInput: {
+    backgroundColor: "#1a1a1a",
+    borderColor: "#333333",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  fixedInputText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontFamily: "monospace",
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
   buttonText: {
     color: "#FFFFFF",
     fontSize: 16,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  transactionDetails: {
+    backgroundColor: "#1a1a1a",
+    padding: 20,
+    borderRadius: 12,
+    marginTop: 20,
+    width: "100%",
+    maxWidth: 280,
+    alignSelf: "center",
+    borderWidth: 1,
+    borderColor: "#333333",
+  },
+  transactionTitle: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  detailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  detailLabel: {
+    color: "#CCCCCC",
+    fontSize: 14,
+    fontWeight: "500",
+    flex: 1,
+  },
+  detailValue: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontFamily: "monospace",
+    flex: 2,
+    textAlign: "right",
+  },
+  voyagerButton: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginTop: 15,
+    alignSelf: "center",
+  },
+  voyagerButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
     fontWeight: "600",
     textAlign: "center",
   },
