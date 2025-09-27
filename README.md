@@ -1,47 +1,50 @@
-# Aegis SDK Template
+# Welcome to your Expo app 👋
 
-Simple Expo mobile app template ready for Aegis SDK integration.
+This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
-## Quick Start
+## Get started
 
-1. Install dependencies:
+1. Install dependencies
+
    ```bash
    npm install
    ```
 
-2. Start the app:
+2. Start the app
+
    ```bash
-   npm start
+   npx expo start
    ```
 
-3. Scan QR code with Expo Go app on your phone
+In the output, you'll find options to open the app in a
 
-## What's Included
+- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
+- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
+- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
+- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-- **Expo** - Cross-platform mobile development
-- **React Native** - Mobile app framework
-- **Minimal setup** - Only essential dependencies
-- **Ready for Aegis SDK** - Clean foundation to build upon
+You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
-## Project Structure
+## Get a fresh project
 
-```
-aegis-sdk-example/
-├── App.js          # Main app component
-├── app.json        # Expo configuration
-├── package.json    # Dependencies
-└── assets/         # App icons and images
+When you're ready, run:
+
+```bash
+npm run reset-project
 ```
 
-## Next Steps
+This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
-1. Add Aegis SDK to your project
-2. Build your app features
-3. Customize the UI and functionality
+## Learn more
 
-## Commands
+To learn more about developing your project with Expo, look at the following resources:
 
-- `npm start` - Start development server
-- `npm run ios` - Run on iOS simulator
-- `npm run android` - Run on Android emulator
-- `npm run web` - Run in web browser
+- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
+- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+
+## Join the community
+
+Join our community of developers creating universal apps.
+
+- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
+- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
