@@ -12,6 +12,7 @@ import {
 import { useRouter } from "expo-router";
 import { useAegis } from "@cavos/aegis";
 import * as SecureStore from "expo-secure-store";
+import * as Clipboard from "expo-clipboard";
 import { useState } from "react";
 
 export default function Balance() {
@@ -21,10 +22,8 @@ export default function Balance() {
   // State for balance data and loading
   const [ethBalance, setEthBalance] = useState<string | null>(null);
   const [tokenBalance, setTokenBalance] = useState<string | null>(null);
-  const [nfts, setNfts] = useState<any[] | null>(null);
   const [isLoadingEth, setIsLoadingEth] = useState(false);
   const [isLoadingToken, setIsLoadingToken] = useState(false);
-  const [isLoadingNfts, setIsLoadingNfts] = useState(false);
 
   const handleGetSTRKBalance = async () => {
     if (!aegisAccount) {
@@ -73,31 +72,22 @@ export default function Balance() {
     }
   };
 
-  const handleGetNFTs = async () => {
-    if (!aegisAccount || !currentAddress) {
-      Alert.alert("Error", "Aegis SDK not initialized or no address available");
-      return;
-    }
-
-    setIsLoadingNfts(true);
-    try {
-      const nftData = await aegisAccount.getNFTs(currentAddress);
-      setNfts(nftData);
-      console.log("NFTs:", nftData);
-      Alert.alert("NFTs", `Found ${nftData.length} NFTs`);
-    } catch (error) {
-      console.error("Failed to get NFTs:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error occurred";
-      Alert.alert("Error", `Failed to get NFTs: ${errorMessage}`);
-    } finally {
-      setIsLoadingNfts(false);
-    }
-  };
-
   const handleGoBack = () => {
     // Navigate back to account screen
     router.back();
+  };
+
+  const handleCopyAddress = async () => {
+    if (currentAddress) {
+      try {
+        await Clipboard.setStringAsync(currentAddress);
+        console.log("Copy address to clipboard:", currentAddress);
+        Alert.alert("Copied", "Address copied to clipboard");
+      } catch (error) {
+        console.error("Failed to copy address:", error);
+        Alert.alert("Error", "Failed to copy address");
+      }
+    }
   };
 
   const handleLogout = async () => {
@@ -154,9 +144,17 @@ export default function Balance() {
         {currentAddress && (
           <View style={styles.addressContainer}>
             <Text style={styles.addressLabel}>Wallet Address:</Text>
-            <Text style={styles.addressText}>
-              {currentAddress.slice(0, 6)}...{currentAddress.slice(-4)}
-            </Text>
+            <View style={styles.addressRow}>
+              <Text style={styles.addressText}>
+                {currentAddress.slice(0, 6)}...{currentAddress.slice(-4)}
+              </Text>
+              <TouchableOpacity
+                onPress={handleCopyAddress}
+                style={styles.copyButton}
+              >
+                <Text style={styles.copyIcon}>⧉</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
@@ -204,28 +202,6 @@ export default function Balance() {
           <View style={styles.balanceResult}>
             <Text style={styles.balanceLabel}>STRK Balance:</Text>
             <Text style={styles.balanceValue}>{tokenBalance} STRK</Text>
-          </View>
-        )}
-
-        <TouchableOpacity
-          style={[styles.balanceButton, isLoadingNfts && styles.disabledButton]}
-          onPress={handleGetNFTs}
-          disabled={isLoadingNfts}
-        >
-          {isLoadingNfts ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator color="#FFFFFF" size="small" />
-              <Text style={styles.buttonText}>Loading...</Text>
-            </View>
-          ) : (
-            <Text style={styles.buttonText}>Get NFTs</Text>
-          )}
-        </TouchableOpacity>
-
-        {nfts && (
-          <View style={styles.balanceResult}>
-            <Text style={styles.balanceLabel}>NFTs Found:</Text>
-            <Text style={styles.balanceValue}>{nfts.length} NFTs</Text>
           </View>
         )}
 
@@ -281,10 +257,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 5,
   },
+  addressRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   addressText: {
     color: "#007AFF",
     fontSize: 16,
     fontWeight: "600",
+    marginRight: 10,
+  },
+  copyButton: {
+    padding: 5,
+  },
+  copyIcon: {
+    color: "#FFFFFF",
+    fontSize: 16,
   },
   balanceButton: {
     backgroundColor: "#007AFF",
@@ -294,6 +282,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     width: "100%",
     maxWidth: 300,
+    alignSelf: "center",
   },
   disabledButton: {
     backgroundColor: "#666666",
@@ -311,6 +300,7 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 300,
     alignItems: "center",
+    alignSelf: "center",
   },
   balanceLabel: {
     color: "#CCCCCC",
@@ -330,6 +320,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     width: "100%",
     maxWidth: 300,
+    alignSelf: "center",
   },
   logoutButtonText: {
     color: "#FFFFFF",

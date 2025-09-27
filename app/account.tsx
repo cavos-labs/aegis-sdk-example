@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import { useAegis } from "@cavos/aegis";
 import { useState, useEffect } from "react";
 import * as SecureStore from "expo-secure-store";
+import * as Clipboard from "expo-clipboard";
 
 export default function Account() {
   const router = useRouter();
@@ -75,11 +76,16 @@ export default function Account() {
     router.push("/balance");
   };
 
-  const handleCopyAddress = () => {
+  const handleCopyAddress = async () => {
     if (walletAddress) {
-      // Copy address to clipboard functionality
-      console.log("Copy address to clipboard:", walletAddress);
-      Alert.alert("Copied", "Address copied to clipboard");
+      try {
+        await Clipboard.setStringAsync(walletAddress);
+        console.log("Copy address to clipboard:", walletAddress);
+        Alert.alert("Copied", "Address copied to clipboard");
+      } catch (error) {
+        console.error("Failed to copy address:", error);
+        Alert.alert("Error", "Failed to copy address");
+      }
     }
   };
 
