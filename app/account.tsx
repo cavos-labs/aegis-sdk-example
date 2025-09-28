@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAegis } from "@cavos/aegis";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import * as SecureStore from "expo-secure-store";
 import * as Clipboard from "expo-clipboard";
 import * as WebBrowser from "expo-web-browser";
@@ -53,17 +53,7 @@ const GoogleLogo = ({ size = 20 }) => (
 
 export default function Account() {
   const router = useRouter();
-  const {
-    aegisAccount,
-    isConnected,
-    currentAddress,
-    disconnect,
-    signUp,
-    signIn,
-    signOut,
-    isSocialAuthenticated,
-    getSocialWallet,
-  } = useAegis();
+  const { aegisAccount, signUp, signIn, signOut, getSocialWallet } = useAegis();
   const [isDeploying, setIsDeploying] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
@@ -74,19 +64,14 @@ export default function Account() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [socialWalletData, setSocialWalletData] = useState<any>(null);
-  
+
   // Apple login state
   const [isAppleLoggingIn, setIsAppleLoggingIn] = useState(false);
-  
+
   // Google login state
   const [isGoogleLoggingIn, setIsGoogleLoggingIn] = useState(false);
 
-  // Load existing wallet on component mount
-  useEffect(() => {
-    loadExistingWallet();
-  }, []);
-
-  const loadExistingWallet = async () => {
+  const loadExistingWallet = useCallback(async () => {
     try {
       const savedPrivateKey = await SecureStore.getItemAsync(
         "wallet_private_key"
@@ -98,7 +83,12 @@ export default function Account() {
     } catch (error) {
       console.log("No existing wallet found or error loading:", error);
     }
-  };
+  }, [aegisAccount]);
+
+  // Load existing wallet on component mount
+  useEffect(() => {
+    loadExistingWallet();
+  }, [loadExistingWallet]);
 
   const handleDeployWallet = async () => {
     if (!aegisAccount) {
@@ -426,48 +416,11 @@ export default function Account() {
     }
   };
 
-  const handleLogout = async () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout? This will clear your wallet data and you will need to create a new wallet.",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              // Clear secure storage
-              await SecureStore.deleteItemAsync("wallet_private_key");
-
-              // Disconnect from Aegis
-              disconnect();
-
-              // Reset local state
-              setWalletAddress(null);
-
-              // Navigate back to home screen
-              router.push("/");
-
-              Alert.alert("Success", "Logged out successfully");
-            } catch (error) {
-              console.error("Logout failed:", error);
-              Alert.alert("Error", "Failed to logout. Please try again.");
-            }
-          },
-        },
-      ]
-    );
-  };
-
   // Get dynamic redirect URI for development
   const getRedirectUri = () => {
-    // For development, you can use your local IP
+    // For development, use the current Expo development server
     // For production, you would use your app's scheme
-    return 'exp://192.168.1.16:8081';
+    return "exp://192.168.100.41:8081";
   };
 
   // Apple Login Function
@@ -482,36 +435,38 @@ export default function Account() {
       // Step 1: Get Apple OAuth URL
       const redirectUri = getRedirectUri();
       const url = await aegisAccount.getAppleOAuthUrl(redirectUri);
-      
+
       console.log("Apple OAuth URL:", url);
 
       // Step 2: Open browser for authentication
       const result = await WebBrowser.openAuthSessionAsync(url, redirectUri);
-      
+
       console.log("Apple OAuth result:", result);
-      console.log("Apple OAuth URL:", result.url);
+      console.log("Apple OAuth URL:", (result as any).url);
 
       // Step 3: Handle the OAuth callback
-      if (result.type === 'success' && 'url' in result && result.url) {
+      if (result.type === "success") {
         try {
-          console.log("Attempting to handle OAuth callback with URL:", result.url);
+          const callbackUrl = (result as any).url;
+          console.log(
+            "Attempting to handle OAuth callback with URL:",
+            callbackUrl
+          );
           // Try to handle the OAuth callback with the URL
-          await aegisAccount.handleOAuthCallback(result.url);
+          await aegisAccount.handleOAuthCallback(callbackUrl);
           console.log("OAuth callback handled successfully");
-          
+
           // Get the social wallet data after successful authentication
           const walletData = await getSocialWallet();
-          
+
           // Handle wallet structure
           let walletAddress = null;
-          if (walletData.wallet) {
-            if (walletData.wallet.data && walletData.wallet.data.address) {
-              walletAddress = walletData.wallet.data.address;
-            } else if (walletData.wallet.address) {
+          if (walletData && walletData.wallet) {
+            if (walletData.wallet.address) {
               walletAddress = walletData.wallet.address;
             }
           }
-          
+
           setSocialWalletData(walletData);
           setWalletAddress(walletAddress);
 
@@ -532,21 +487,19 @@ export default function Account() {
           console.log("Apple login result:", walletData);
         } catch (callbackError) {
           console.error("OAuth callback handling failed:", callbackError);
-          
+
           // Even if callback handling fails, try to get wallet data directly
           try {
             const walletData = await getSocialWallet();
-            
+
             // Handle wallet structure
             let walletAddress = null;
-            if (walletData.wallet) {
-              if (walletData.wallet.data && walletData.wallet.data.address) {
-                walletAddress = walletData.wallet.data.address;
-              } else if (walletData.wallet.address) {
+            if (walletData && walletData.wallet) {
+              if (walletData.wallet.address) {
                 walletAddress = walletData.wallet.address;
               }
             }
-            
+
             setSocialWalletData(walletData);
             setWalletAddress(walletAddress);
 
@@ -566,18 +519,25 @@ export default function Account() {
 
             console.log("Apple login result (fallback):", walletData);
           } catch (fallbackError) {
-            console.error("Fallback wallet data retrieval failed:", fallbackError);
-            Alert.alert("Error", "Apple login completed but couldn't retrieve wallet data");
+            console.error(
+              "Fallback wallet data retrieval failed:",
+              fallbackError
+            );
+            Alert.alert(
+              "Error",
+              "Apple login completed but couldn't retrieve wallet data"
+            );
           }
         }
-      } else if (result.type === 'cancel') {
+      } else if (result.type === "cancel") {
         Alert.alert("Cancelled", "Apple login was cancelled");
       } else {
         Alert.alert("Error", "Apple login failed");
       }
     } catch (error) {
       console.error("Apple login failed:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
       Alert.alert("Error", `Apple login failed: ${errorMessage}`);
     } finally {
       setIsAppleLoggingIn(false);
@@ -596,36 +556,38 @@ export default function Account() {
       // Step 1: Get Google OAuth URL
       const redirectUri = getRedirectUri();
       const url = await aegisAccount.getGoogleOAuthUrl(redirectUri);
-      
+
       console.log("Google OAuth URL:", url);
 
       // Step 2: Open browser for authentication
       const result = await WebBrowser.openAuthSessionAsync(url, redirectUri);
-      
+
       console.log("Google OAuth result:", result);
-      console.log("Google OAuth URL:", result.url);
+      console.log("Google OAuth URL:", (result as any).url);
 
       // Step 3: Handle the OAuth callback
-      if (result.type === 'success' && 'url' in result && result.url) {
+      if (result.type === "success") {
         try {
-          console.log("Attempting to handle Google OAuth callback with URL:", result.url);
+          const callbackUrl = (result as any).url;
+          console.log(
+            "Attempting to handle Google OAuth callback with URL:",
+            callbackUrl
+          );
           // Try to handle the OAuth callback with the URL
-          await aegisAccount.handleOAuthCallback(result.url);
+          await aegisAccount.handleOAuthCallback(callbackUrl);
           console.log("Google OAuth callback handled successfully");
-          
+
           // Get the social wallet data after successful authentication
           const walletData = await getSocialWallet();
-          
+
           // Handle wallet structure
           let walletAddress = null;
-          if (walletData.wallet) {
-            if (walletData.wallet.data && walletData.wallet.data.address) {
-              walletAddress = walletData.wallet.data.address;
-            } else if (walletData.wallet.address) {
+          if (walletData && walletData.wallet) {
+            if (walletData.wallet.address) {
               walletAddress = walletData.wallet.address;
             }
           }
-          
+
           setSocialWalletData(walletData);
           setWalletAddress(walletAddress);
 
@@ -645,22 +607,23 @@ export default function Account() {
 
           console.log("Google login result:", walletData);
         } catch (callbackError) {
-          console.error("Google OAuth callback handling failed:", callbackError);
-          
+          console.error(
+            "Google OAuth callback handling failed:",
+            callbackError
+          );
+
           // Even if callback handling fails, try to get wallet data directly
           try {
             const walletData = await getSocialWallet();
-            
+
             // Handle wallet structure
             let walletAddress = null;
-            if (walletData.wallet) {
-              if (walletData.wallet.data && walletData.wallet.data.address) {
-                walletAddress = walletData.wallet.data.address;
-              } else if (walletData.wallet.address) {
+            if (walletData && walletData.wallet) {
+              if (walletData.wallet.address) {
                 walletAddress = walletData.wallet.address;
               }
             }
-            
+
             setSocialWalletData(walletData);
             setWalletAddress(walletAddress);
 
@@ -680,18 +643,25 @@ export default function Account() {
 
             console.log("Google login result (fallback):", walletData);
           } catch (fallbackError) {
-            console.error("Fallback wallet data retrieval failed:", fallbackError);
-            Alert.alert("Error", "Google login completed but couldn't retrieve wallet data");
+            console.error(
+              "Fallback wallet data retrieval failed:",
+              fallbackError
+            );
+            Alert.alert(
+              "Error",
+              "Google login completed but couldn't retrieve wallet data"
+            );
           }
         }
-      } else if (result.type === 'cancel') {
+      } else if (result.type === "cancel") {
         Alert.alert("Cancelled", "Google login was cancelled");
       } else {
         Alert.alert("Error", "Google login failed");
       }
     } catch (error) {
       console.error("Google login failed:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
       Alert.alert("Error", `Google login failed: ${errorMessage}`);
     } finally {
       setIsGoogleLoggingIn(false);
@@ -779,6 +749,24 @@ export default function Account() {
             {!showEmailLogin ? (
               <>
                 <TouchableOpacity
+                  style={[
+                    styles.deployButton,
+                    isDeploying && styles.disabledButton,
+                  ]}
+                  onPress={handleDeployWallet}
+                  disabled={isDeploying}
+                >
+                  {isDeploying ? (
+                    <View style={styles.loadingContainer}>
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                      <Text style={styles.buttonText}>Deploying...</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.buttonText}>Create In-App Wallet</Text>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
                   style={styles.authButton}
                   onPress={() => setShowEmailLogin(true)}
                 >
@@ -796,12 +784,16 @@ export default function Account() {
                   {isAppleLoggingIn ? (
                     <View style={styles.loadingContainer}>
                       <ActivityIndicator color="#FFFFFF" size="small" />
-                      <Text style={styles.buttonText}>Signing in with Apple...</Text>
+                      <Text style={styles.buttonText}>
+                        Signing in with Apple...
+                      </Text>
                     </View>
                   ) : (
                     <View style={styles.appleButtonContent}>
                       <AppleLogo size={18} color="#FFFFFF" />
-                      <Text style={styles.appleButtonText}>Sign in with Apple</Text>
+                      <Text style={styles.appleButtonText}>
+                        Sign in with Apple
+                      </Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -817,31 +809,17 @@ export default function Account() {
                   {isGoogleLoggingIn ? (
                     <View style={styles.loadingContainer}>
                       <ActivityIndicator color="#FFFFFF" size="small" />
-                      <Text style={styles.buttonText}>Signing in with Google...</Text>
+                      <Text style={styles.buttonText}>
+                        Signing in with Google...
+                      </Text>
                     </View>
                   ) : (
                     <View style={styles.googleButtonContent}>
                       <GoogleLogo size={18} />
-                      <Text style={styles.googleButtonText}>Sign in with Google</Text>
+                      <Text style={styles.googleButtonText}>
+                        Sign in with Google
+                      </Text>
                     </View>
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.deployButton,
-                    isDeploying && styles.disabledButton,
-                  ]}
-                  onPress={handleDeployWallet}
-                  disabled={isDeploying}
-                >
-                  {isDeploying ? (
-                    <View style={styles.loadingContainer}>
-                      <ActivityIndicator color="#FFFFFF" size="small" />
-                      <Text style={styles.buttonText}>Deploying...</Text>
-                    </View>
-                  ) : (
-                    <Text style={styles.buttonText}>Create In-App Wallet</Text>
                   )}
                 </TouchableOpacity>
               </>
@@ -1002,8 +980,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     paddingVertical: 16,
     borderRadius: 8,
-    marginBottom: 40,
-    minWidth: 200,
+    marginBottom: 20,
+    width: "100%",
+    maxWidth: 300,
   },
   disabledButton: {
     backgroundColor: "#666666",
@@ -1034,30 +1013,22 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   authButton: {
-    backgroundColor: "#34C759",
+    backgroundColor: "#007AFF",
     paddingHorizontal: 40,
     paddingVertical: 16,
     borderRadius: 8,
     marginBottom: 20,
-    minWidth: 200,
+    width: "100%",
+    maxWidth: 300,
   },
   appleButton: {
-    backgroundColor: "#000000",
-    borderColor: "#FFFFFF",
-    borderWidth: 1,
+    backgroundColor: "#007AFF",
     paddingHorizontal: 40,
     paddingVertical: 16,
     borderRadius: 8,
     marginBottom: 20,
-    minWidth: 200,
-    shadowColor: "#000000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    width: "100%",
+    maxWidth: 300,
   },
   appleButtonContent: {
     flexDirection: "row",
@@ -1072,22 +1043,13 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   googleButton: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#DADCE0",
-    borderWidth: 1,
+    backgroundColor: "#007AFF",
     paddingHorizontal: 40,
     paddingVertical: 16,
     borderRadius: 8,
     marginBottom: 20,
-    minWidth: 200,
-    shadowColor: "#000000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    width: "100%",
+    maxWidth: 300,
   },
   googleButtonContent: {
     flexDirection: "row",
@@ -1095,7 +1057,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   googleButtonText: {
-    color: "#3C4043",
+    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",
