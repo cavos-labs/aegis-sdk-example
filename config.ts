@@ -2,14 +2,33 @@
  * Aegis SDK Configuration
  *
  * This file contains the configuration settings for the Aegis SDK integration.
- * It loads sensitive configuration from environment variables for security,
- * with fallback values for development purposes.
+ * It loads configuration from environment variables for security.
+ *
+ * REQUIRED: You must set the following environment variables:
+ * - AEGIS_APP_ID: Your Aegis App ID from https://aegis.cavos.xyz
+ * - AEGIS_API_SECRET: Your Aegis API Secret from https://aegis.cavos.xyz
+ *
+ * Create a .env file in the project root with these variables.
+ * See .env.example for reference.
  *
  * IMPORTANT: Never commit sensitive values like API secrets to public repositories.
  * Use environment variables or secure configuration management in production.
  */
 
 import Constants from "expo-constants";
+
+// Validate required environment variables
+if (!Constants.expoConfig?.extra?.aegisAppId) {
+  throw new Error(
+    "AEGIS_APP_ID environment variable is required. Please set it in your .env file or environment."
+  );
+}
+
+if (!Constants.expoConfig?.extra?.aegisApiSecret) {
+  throw new Error(
+    "AEGIS_API_SECRET environment variable is required. Please set it in your .env file or environment."
+  );
+}
 
 export const AEGIS_CONFIG = {
   /**
@@ -18,11 +37,9 @@ export const AEGIS_CONFIG = {
    * This is your unique application identifier obtained from https://aegis.cavos.xyz
    * Each app needs its own App ID to interact with the Aegis platform.
    *
-   * Priority: Environment variable > Fallback value
+   * Must be set via environment variable AEGIS_APP_ID
    */
-  appId:
-    Constants.expoConfig?.extra?.aegisAppId ||
-    "app-6fd6d3c95e7a16fc717c5895d3b76ee0",
+  appId: Constants.expoConfig?.extra?.aegisAppId,
 
   /**
    * API Secret - Required for server-side operations
@@ -30,11 +47,9 @@ export const AEGIS_CONFIG = {
    * This secret key is used for authenticating API requests to the Aegis platform.
    * Keep this value secure and never expose it in client-side code or public repositories.
    *
-   * Priority: Environment variable > Fallback value
+   * Must be set via environment variable AEGIS_API_SECRET
    */
-  apiSecret:
-    Constants.expoConfig?.extra?.aegisApiSecret ||
-    "41c2cdac674030a62122f7e5dffd5d68e6b07053a48263b8cc87286ceefbecf1",
+  apiSecret: Constants.expoConfig?.extra?.aegisApiSecret,
 
   /**
    * Application Configuration
@@ -85,23 +100,15 @@ export const AEGIS_CONFIG = {
  *
  * 1. Environment Variables: Always use environment variables for sensitive data
  * 2. Never Commit Secrets: Never commit API secrets or private keys to version control
- * 3. Use app.config.js: Configure environment variables in app.config.js
+ * 3. Use .env file: Create a .env file with your actual values (see .env.example)
  * 4. Production Security: Consider using a secrets management service in production
  * 5. Regular Rotation: Regularly rotate API keys and secrets
  * 6. Access Control: Limit access to configuration files to authorized developers only
+ * 7. Validation: Required environment variables are validated at startup
  *
- * Example app.config.js configuration:
- * ```javascript
- * export default {
- *   extra: {
- *     aegisAppId: process.env.AEGIS_APP_ID,
- *     aegisApiSecret: process.env.AEGIS_API_SECRET,
- *     aegisAppName: process.env.AEGIS_APP_NAME,
- *     aegisNetwork: process.env.AEGIS_NETWORK,
- *     aegisEnableLogging: process.env.AEGIS_ENABLE_LOGGING,
- *     aegisPaymasterApiKey: process.env.AEGIS_PAYMASTER_API_KEY,
- *     aegisTrackingApiUrl: process.env.AEGIS_TRACKING_API_URL,
- *   }
- * };
- * ```
+ * Setup Instructions:
+ * 1. Copy .env.example to .env
+ * 2. Fill in your actual Aegis App ID and API Secret
+ * 3. Optionally configure other settings
+ * 4. Never commit the .env file to version control
  */
