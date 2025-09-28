@@ -1,3 +1,22 @@
+/**
+ * Account Screen - Wallet Connection & Authentication
+ *
+ * This screen provides multiple ways for users to connect to Starknet:
+ * 1. Create In-App Wallet - Deploy a new Starknet wallet directly in the app
+ * 2. Email & Password - Traditional authentication with automatic wallet creation
+ * 3. Apple Sign-In - OAuth authentication using Apple ID
+ * 4. Google Sign-In - OAuth authentication using Google account
+ *
+ * Key Features:
+ * - Wallet deployment with gasless transactions
+ * - Secure private key storage using Expo SecureStore
+ * - Social authentication (Apple/Google)
+ * - Email/password authentication
+ * - Wallet persistence across app sessions
+ * - Error handling and user feedback
+ * - Loading states for all operations
+ */
+
 import {
   Text,
   View,
@@ -19,7 +38,12 @@ import * as Clipboard from "expo-clipboard";
 import * as WebBrowser from "expo-web-browser";
 import Svg, { Path } from "react-native-svg";
 
-// Apple Logo Component
+/**
+ * Apple Logo Component
+ *
+ * Custom SVG component for Apple's logo used in the Apple Sign-In button.
+ * This provides a consistent Apple branding experience.
+ */
 const AppleLogo = ({ size = 20, color = "#FFFFFF" }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
@@ -29,7 +53,12 @@ const AppleLogo = ({ size = 20, color = "#FFFFFF" }) => (
   </Svg>
 );
 
-// Google Logo Component
+/**
+ * Google Logo Component
+ *
+ * Custom SVG component for Google's logo used in the Google Sign-In button.
+ * This provides a consistent Google branding experience with the official colors.
+ */
 const GoogleLogo = ({ size = 20 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path
@@ -51,9 +80,20 @@ const GoogleLogo = ({ size = 20 }) => (
   </Svg>
 );
 
+/**
+ * Main Account Component
+ *
+ * This component handles all wallet connection and authentication flows.
+ * It provides a comprehensive interface for users to connect to Starknet
+ * using various authentication methods.
+ */
 export default function Account() {
   const router = useRouter();
+
+  // Aegis SDK hooks - provides access to wallet and authentication functions
   const { aegisAccount, signUp, signIn, signOut, getSocialWallet } = useAegis();
+
+  // Wallet deployment state
   const [isDeploying, setIsDeploying] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
@@ -65,17 +105,34 @@ export default function Account() {
   const [password, setPassword] = useState("");
   const [socialWalletData, setSocialWalletData] = useState<any>(null);
 
-  // Apple login state
+  // Apple OAuth authentication state
   const [isAppleLoggingIn, setIsAppleLoggingIn] = useState(false);
 
-  // Google login state
+  // Google OAuth authentication state
   const [isGoogleLoggingIn, setIsGoogleLoggingIn] = useState(false);
 
+  /**
+   * Load Existing Wallet
+   *
+   * This function attempts to load a previously saved wallet from secure storage.
+   * It's called when the component mounts to restore the user's wallet session.
+   *
+   * Process:
+   * 1. Retrieve private key from Expo SecureStore
+   * 2. If found, connect the account using the private key
+   * 3. Update UI state with the wallet address
+   *
+   * Security: Private keys are stored securely using Expo SecureStore,
+   * which uses the device's keychain on iOS and Keystore on Android.
+   */
   const loadExistingWallet = useCallback(async () => {
     try {
+      // Retrieve the saved private key from secure storage
       const savedPrivateKey = await SecureStore.getItemAsync(
         "wallet_private_key"
       );
+
+      // If we have a private key and the SDK is initialized, connect the account
       if (savedPrivateKey && aegisAccount) {
         await aegisAccount.connectAccount(savedPrivateKey);
         setWalletAddress(aegisAccount.address);
@@ -85,11 +142,27 @@ export default function Account() {
     }
   }, [aegisAccount]);
 
-  // Load existing wallet on component mount
+  // Load existing wallet when component mounts
   useEffect(() => {
     loadExistingWallet();
   }, [loadExistingWallet]);
 
+  /**
+   * Deploy New Wallet
+   *
+   * This function creates a new Starknet wallet using the Aegis SDK.
+   * The deployment is gasless, meaning users don't need ETH to create a wallet.
+   *
+   * Process:
+   * 1. Generate a new private key
+   * 2. Deploy the wallet contract on Starknet (gasless)
+   * 3. Save the private key securely to device storage
+   * 4. Update UI with the new wallet address
+   * 5. Show success message with wallet details
+   *
+   * Security: The private key is immediately saved to secure storage
+   * and never transmitted over the network.
+   */
   const handleDeployWallet = async () => {
     if (!aegisAccount) {
       Alert.alert("Error", "Aegis SDK not initialized");
@@ -98,15 +171,16 @@ export default function Account() {
 
     setIsDeploying(true);
     try {
-      // Deploy new wallet
+      // Deploy new wallet using Aegis SDK (gasless deployment)
       const privateKey = await aegisAccount.deployAccount();
 
-      // Save private key securely
+      // Save private key securely to device storage
       await SecureStore.setItemAsync("wallet_private_key", privateKey);
 
-      // Update UI with new address
+      // Update UI state with the new wallet address
       setWalletAddress(aegisAccount.address);
 
+      // Show success message with wallet details
       Alert.alert(
         "Wallet Created!",
         `Your wallet has been deployed successfully.\n\nAddress: ${aegisAccount.address}\n\nPrivate Key: ${privateKey}\n\n⚠️ IMPORTANT: Save your private key securely!`,
@@ -122,11 +196,25 @@ export default function Account() {
     }
   };
 
+  /**
+   * Navigate to Balance Screen
+   *
+   * This function navigates to the balance screen where users can:
+   * - View their ETH and token balances
+   * - Execute transactions
+   * - View transaction history
+   */
   const handleGoToAccount = () => {
     // Navigate to balance screen
     router.push("/balance");
   };
 
+  /**
+   * Copy Wallet Address to Clipboard
+   *
+   * This function copies the current wallet address to the device's clipboard.
+   * Useful for sharing the address or using it in other applications.
+   */
   const handleCopyAddress = async () => {
     if (walletAddress) {
       try {
@@ -140,12 +228,41 @@ export default function Account() {
     }
   };
 
+  /**
+   * Navigate Back to Previous Screen
+   *
+   * This function navigates back to the previous screen in the navigation stack.
+   * In this case, it goes back to the welcome screen.
+   */
   const handleGoBack = () => {
     // Navigate back to connect screen
     router.back();
   };
 
-  // Email/Password Authentication Functions
+  /**
+   * Email/Password Authentication Functions
+   *
+   * These functions handle traditional email/password authentication.
+   * The Aegis SDK automatically creates a Starknet wallet for each user
+   * during the authentication process.
+   */
+
+  /**
+   * Handle User Registration
+   *
+   * This function registers a new user with email/password authentication.
+   * The Aegis SDK automatically creates a Starknet wallet for the new user.
+   *
+   * Process:
+   * 1. Validate input fields
+   * 2. Call SDK signUp function
+   * 3. Handle wallet creation (may fail but user is still registered)
+   * 4. Update UI state with user data
+   * 5. Show success message
+   *
+   * Note: Wallet deployment may fail during signup, but the user account
+   * is still created. The wallet will be created automatically on next login.
+   */
   const handleSignUp = async () => {
     if (!email || !password) {
       Alert.alert("Error", "Please fill in all fields");
@@ -416,14 +533,43 @@ export default function Account() {
     }
   };
 
-  // Get dynamic redirect URI for development
+  /**
+   * OAuth Authentication Functions
+   *
+   * These functions handle social authentication using Apple and Google OAuth.
+   * The Aegis SDK manages the OAuth flow and automatically creates Starknet wallets
+   * for authenticated users.
+   */
+
+  /**
+   * Get Dynamic Redirect URI for Development
+   *
+   * This function returns the appropriate redirect URI for OAuth flows.
+   * In development, it uses the Expo development server URL.
+   * In production, you would use your app's custom scheme.
+   */
   const getRedirectUri = () => {
     // For development, use the current Expo development server
-    // For production, you would use your app's scheme
+    // For production, you would use your app's scheme (e.g., "myapp://oauth")
     return "exp://192.168.100.41:8081";
   };
 
-  // Apple Login Function
+  /**
+   * Handle Apple Sign-In
+   *
+   * This function implements the complete Apple Sign-In flow using OAuth.
+   * The Aegis SDK handles the OAuth URL generation and callback processing.
+   *
+   * Process:
+   * 1. Get Apple OAuth URL from Aegis SDK
+   * 2. Open browser for user authentication
+   * 3. Handle OAuth callback and extract user data
+   * 4. Retrieve wallet data from Aegis SDK
+   * 5. Update UI with user and wallet information
+   *
+   * Security: The OAuth flow is handled securely by the Aegis SDK,
+   * and user credentials are never exposed to the client.
+   */
   const handleAppleLogin = async () => {
     if (!aegisAccount) {
       Alert.alert("Error", "Aegis account not initialized");
@@ -432,13 +578,13 @@ export default function Account() {
 
     setIsAppleLoggingIn(true);
     try {
-      // Step 1: Get Apple OAuth URL
+      // Step 1: Get Apple OAuth URL from Aegis SDK
       const redirectUri = getRedirectUri();
       const url = await aegisAccount.getAppleOAuthUrl(redirectUri);
 
       console.log("Apple OAuth URL:", url);
 
-      // Step 2: Open browser for authentication
+      // Step 2: Open browser for user authentication
       const result = await WebBrowser.openAuthSessionAsync(url, redirectUri);
 
       console.log("Apple OAuth result:", result);
@@ -544,7 +690,23 @@ export default function Account() {
     }
   };
 
-  // Google Login Function
+  /**
+   * Handle Google Sign-In
+   *
+   * This function implements the complete Google Sign-In flow using OAuth.
+   * Similar to Apple Sign-In, it uses the Aegis SDK for OAuth URL generation
+   * and callback processing.
+   *
+   * Process:
+   * 1. Get Google OAuth URL from Aegis SDK
+   * 2. Open browser for user authentication
+   * 3. Handle OAuth callback and extract user data
+   * 4. Retrieve wallet data from Aegis SDK
+   * 5. Update UI with user and wallet information
+   *
+   * Security: The OAuth flow is handled securely by the Aegis SDK,
+   * and user credentials are never exposed to the client.
+   */
   const handleGoogleLogin = async () => {
     if (!aegisAccount) {
       Alert.alert("Error", "Aegis account not initialized");

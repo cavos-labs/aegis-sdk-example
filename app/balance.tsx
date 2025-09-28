@@ -1,3 +1,22 @@
+/**
+ * Balance Screen - Wallet Management & Transaction Execution
+ *
+ * This screen provides comprehensive wallet management functionality including:
+ * - ETH and token balance queries
+ * - Transaction execution (approve, batch transactions)
+ * - Transaction history viewing
+ * - Voyager explorer integration
+ *
+ * Key Features:
+ * - Real-time balance queries
+ * - Secure transaction execution
+ * - Batch transaction support
+ * - Transaction hash tracking
+ * - Voyager explorer integration
+ * - Error handling and user feedback
+ * - Loading states for all operations
+ */
+
 import {
   Text,
   View,
@@ -17,24 +36,50 @@ import { useState } from "react";
 
 export default function Balance() {
   const router = useRouter();
+
+  // Aegis SDK hooks - provides access to wallet and transaction functions
   const { aegisAccount, currentAddress } = useAegis();
 
-  // State for balance data and loading
+  // State for balance data and loading indicators
   const [ethBalance, setEthBalance] = useState<string | null>(null);
   const [tokenBalance, setTokenBalance] = useState<string | null>(null);
   const [isLoadingEth, setIsLoadingEth] = useState(false);
   const [isLoadingToken, setIsLoadingToken] = useState(false);
 
-  // State for execute approve
+  // State for transaction execution
   const [isExecuting, setIsExecuting] = useState(false);
   const [lastTransactionHash, setLastTransactionHash] = useState<string | null>(
     null
   );
 
-  // Fixed values (hardcoded)
+  // Fixed values for demonstration (in production, these would be user inputs)
   const spenderAddress = "0x1234567890123456789012345678901234567890";
-  const approveAmount = "500000000000000000"; // 0.5 ETH in wei
+  const approveAmount = "500000000000000000"; // 0.5 ETH in wei (18 decimals)
 
+  /**
+   * Balance Query Functions
+   *
+   * These functions query the current wallet's ETH and token balances
+   * using the Aegis SDK. They provide real-time balance information
+   * and handle errors gracefully.
+   */
+
+  /**
+   * Get STRK Token Balance
+   *
+   * This function queries the STRK token balance for the current wallet.
+   * STRK is the native token of the Starknet network.
+   *
+   * Process:
+   * 1. Validate SDK initialization
+   * 2. Call SDK getTokenBalance method with STRK contract address
+   * 3. Update UI state with balance
+   * 4. Show success alert with balance
+   * 5. Handle errors gracefully
+   *
+   * Note: The STRK token address is specific to the Sepolia testnet.
+   * For mainnet, you would use the mainnet STRK token address.
+   */
   const handleGetSTRKBalance = async () => {
     if (!aegisAccount) {
       Alert.alert("Error", "Aegis SDK not initialized");
@@ -43,9 +88,11 @@ export default function Balance() {
 
     setIsLoadingToken(true);
     try {
-      // Get STRK token balance (STRK token address on Sepolia)
+      // STRK token address on Sepolia testnet
       const strkTokenAddress =
         "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
+
+      // Query token balance (18 decimals for STRK)
       const balance = await aegisAccount.getTokenBalance(strkTokenAddress, 18);
       setTokenBalance(balance);
       console.log("STRK balance:", balance);
@@ -60,6 +107,21 @@ export default function Balance() {
     }
   };
 
+  /**
+   * Get ETH Balance
+   *
+   * This function queries the ETH balance for the current wallet.
+   * ETH is the native currency of the Starknet network.
+   *
+   * Process:
+   * 1. Validate SDK initialization
+   * 2. Call SDK getETHBalance method
+   * 3. Update UI state with balance
+   * 4. Show success alert with balance
+   * 5. Handle errors gracefully
+   *
+   * Note: This queries the native ETH balance, not wrapped ETH (WETH).
+   */
   const handleGetETHBalance = async () => {
     if (!aegisAccount) {
       Alert.alert("Error", "Aegis SDK not initialized");
@@ -68,6 +130,7 @@ export default function Balance() {
 
     setIsLoadingEth(true);
     try {
+      // Query native ETH balance
       const balance = await aegisAccount.getETHBalance();
       setEthBalance(balance);
       console.log("ETH balance:", balance);
@@ -82,11 +145,30 @@ export default function Balance() {
     }
   };
 
+  /**
+   * Utility Functions
+   *
+   * These functions handle navigation and utility operations
+   * like copying addresses to clipboard.
+   */
+
+  /**
+   * Navigate Back to Account Screen
+   *
+   * This function navigates back to the account screen where users can
+   * manage their wallet connection and authentication.
+   */
   const handleGoBack = () => {
     // Navigate back to account screen
     router.back();
   };
 
+  /**
+   * Copy Wallet Address to Clipboard
+   *
+   * This function copies the current wallet address to the device's clipboard.
+   * Useful for sharing the address or using it in other applications.
+   */
   const handleCopyAddress = async () => {
     if (currentAddress) {
       try {
@@ -100,6 +182,31 @@ export default function Balance() {
     }
   };
 
+  /**
+   * Transaction Execution Functions
+   *
+   * These functions handle the execution of transactions on Starknet
+   * using the Aegis SDK. They support both single and batch transactions.
+   */
+
+  /**
+   * Execute Approve Transaction
+   *
+   * This function executes an ERC-20 approve transaction, allowing a spender
+   * to transfer tokens on behalf of the wallet owner.
+   *
+   * Process:
+   * 1. Validate SDK initialization
+   * 2. Prepare transaction parameters (contract, spender, amount)
+   * 3. Execute transaction using SDK executeBatch method
+   * 4. Store transaction hash for tracking
+   * 5. Show success message with transaction details
+   * 6. Handle errors gracefully
+   *
+   * Security: The transaction is signed using the wallet's private key
+   * and submitted to the Starknet network. The user must have sufficient
+   * ETH for gas fees (unless using a paymaster).
+   */
   const handleExecuteApprove = async () => {
     if (!aegisAccount) {
       Alert.alert("Error", "Aegis SDK not initialized");
@@ -108,7 +215,7 @@ export default function Balance() {
 
     setIsExecuting(true);
     try {
-      // STRK token address on Sepolia
+      // STRK token address on Sepolia testnet
       const strkTokenAddress =
         "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
 
@@ -119,7 +226,8 @@ export default function Balance() {
         currentAddress: currentAddress,
       });
 
-      // Execute approve transaction using SDK
+      // Execute approve transaction using SDK executeBatch method
+      // This allows for future expansion to multiple calls in one transaction
       const result = await aegisAccount.executeBatch([
         {
           contractAddress: strkTokenAddress,
@@ -128,6 +236,7 @@ export default function Balance() {
         },
       ]);
 
+      // Store transaction hash for tracking and display
       setLastTransactionHash(result.transactionHash);
 
       Alert.alert(
@@ -447,14 +556,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontFamily: "monospace",
-  },
-  loadingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  disabledButton: {
-    opacity: 0.6,
   },
   buttonText: {
     color: "#FFFFFF",

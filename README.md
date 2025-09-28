@@ -1,50 +1,98 @@
-# Welcome to your Expo app 👋
+# Aegis SDK Example Application
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This is a comprehensive example application demonstrating how to integrate the Aegis SDK for Starknet wallet functionality. The application showcases wallet creation, authentication, balance management, and transaction execution in a mobile environment.
 
-## Get started
+## What This Application Does
 
-1. Install dependencies
+This example application provides a complete demonstration of blockchain wallet functionality, including:
+
+- **Wallet Creation**: Users can create new Starknet wallets directly within the application
+- **Multiple Authentication Methods**: Support for email/password, Apple Sign-In, and Google Sign-In
+- **Balance Management**: View ETH and token balances in real-time
+- **Transaction Execution**: Send and approve transactions on the Starknet network
+- **Secure Storage**: Private keys are stored securely on the device
+
+## Getting Started
+
+### Prerequisites
+
+Before running this application, ensure you have the following installed:
+
+- Node.js (version 16 or higher)
+- npm or yarn package manager
+- Expo CLI (for mobile development)
+- A mobile device or emulator for testing
+
+### Installation Steps
+
+1. **Install Dependencies**
+
+   Navigate to the project directory and install all required packages:
 
    ```bash
    npm install
    ```
 
-2. Start the app
+2. **Start the Application**
+
+   Launch the development server:
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+3. **Run on Device**
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+   The application can be run on:
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+   - Physical mobile devices using the Expo Go app
+   - iOS Simulator (for iOS development)
+   - Android Emulator (for Android development)
+   - Web browsers (limited functionality)
 
-## Get a fresh project
+## Project Structure
 
-When you're ready, run:
+The application is organized into several key components:
 
-```bash
-npm run reset-project
-```
+- **Configuration**: Settings and environment variables for the Aegis SDK
+- **Authentication**: User login and wallet connection functionality
+- **Balance Management**: Display and query wallet balances
+- **Transaction Handling**: Execute and track blockchain transactions
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Key Features Explained
 
-## Learn more
+### Wallet Management
 
-To learn more about developing your project with Expo, look at the following resources:
+The application allows users to create and manage Starknet wallets without requiring prior blockchain knowledge. Wallets are created using gasless deployment, meaning users don't need ETH to get started.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Security
 
-## Join the community
+All private keys are stored securely on the device using the device's built-in security features. Private keys never leave the device and are not transmitted over the network.
 
-Join our community of developers creating universal apps.
+### User Experience
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The interface is designed to be intuitive for both technical and non-technical users, with clear instructions and helpful error messages.
+
+## Development
+
+This project uses modern React Native development practices with TypeScript for type safety and better code quality.
+
+### File Organization
+
+- **app/**: Main application code
+- **config.ts**: Configuration settings
+- **AEGIS_INTEGRATION.md**: Detailed integration documentation
+
+### Customization
+
+The application can be customized by modifying the configuration settings in `config.ts` and adding new features to the existing components.
+
+## Support and Documentation
+
+For detailed integration instructions and API documentation, refer to the `AEGIS_INTEGRATION.md` file included in this project.
+
+## Additional Resources
+
+- [Expo Documentation](https://docs.expo.dev/): Learn about mobile app development with Expo
+- [React Native Documentation](https://reactnative.dev/): Understand the underlying framework
+- [Starknet Documentation](https://docs.starknet.io/): Learn about the Starknet blockchain
