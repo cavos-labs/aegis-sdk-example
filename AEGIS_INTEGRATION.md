@@ -105,9 +105,9 @@ The application uses environment variables for secure configuration management:
    - Never commit `.env` files to version control
 
 2. **Required Configuration**:
-   - **App ID**: `app-6fd6d3c95e7a16fc717c5895d3b76ee0` (example)
-   - **API Secret**: `41c2cdac674030a62122f7e5dffd5d68e6b07053a48263b8cc87286ceefbecf1` (example)
-   - **Network**: SN_SEPOLIA (testnet)
+   - **App ID**: Set `AEGIS_APP_ID` in your `.env` file
+   - **API Secret**: Set `AEGIS_API_SECRET` in your `.env` file
+   - **Network**: SN_SEPOLIA (testnet) - configurable via `AEGIS_NETWORK`
 
 Configuration is managed in `config.ts` and loaded from environment variables.
 
